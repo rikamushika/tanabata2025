@@ -1,7 +1,6 @@
 /index.html
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8">
   <title>短冊ビューア</title>
@@ -64,25 +63,6 @@
       line-height: 1.2;
     }
 
-    .wish {
-      flex-grow: 1;
-      word-break: break-word;
-      font-size: 14px;
-      line-height: 1.2;
-      overflow: hidden;
-    }
-
-    .penname {
-      writing-mode: vertical-rl;
-      font-size: 12px;
-      opacity: 0.8;
-      overflow: hidden;
-      word-break: break-word;
-      max-height: 20%;
-      line-height: 1.1;
-      margin: 0 auto;
-    }
-
     #popup {
       display: none;
       position: fixed;
@@ -101,100 +81,112 @@
       border-radius: 10px;
       max-width: 400px;
     }
+
+    #age-buttons {
+      position: fixed;
+      top: 420px;
+      left: 1150px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 999;
+    }
+
+    #age-buttons button {
+      font-size: 14px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: 1px solid #888;
+      border-radius: 5px;
+      background-color: #ffffff;
+    }
+
+    #age-buttons button:hover {
+      background-color: #d0eaff;
+    }
   </style>
 </head>
-
 <body>
-  <div id="tanzaku-container"></div>
+<div id="age-buttons">
+  <button onclick="filterByAge('10代以下')">10代以下</button>
+  <button onclick="filterByAge('20代')">20代</button>
+  <button onclick="filterByAge('30代')">30代</button>
+  <button onclick="filterByAge('40代')">40代</button>
+  <button onclick="filterByAge('50代')">50代</button>
+  <button onclick="filterByAge('60代')">60代</button>
+  <button onclick="filterByAge('70代')">70代</button>
+  <button onclick="filterByAge('80代以上')">80代以上</button>
+  <button onclick="filterByAge()">全て表示</button>
+</div>
 
-  <div id="popup">
-    <div id="popup-content"></div>
-  </div>
+<div id="tanzaku-container"></div>
 
-  <script>
-    const container = document.getElementById("tanzaku-container");
-    const popup = document.getElementById("popup");
-    const popupContent = document.getElementById("popup-content");
-    const imgURL = "https://iccarcgis.maps.arcgis.com/sharing/rest/content/items/63b21d4621df4c6eb4ffc05ecad72bd6/data";
+<div id="popup" onclick="popup.style.display = 'none';">
+  <div id="popup-content" onclick="event.stopPropagation();"></div>
+</div>
 
-    const ageField = "field_4";
-    let currentWhere = "1=1";
+<script>
+const container = document.getElementById("tanzaku-container");
+const popup = document.getElementById("popup");
+const popupContent = document.getElementById("popup-content");
+const imgURL = "https://iccarcgis.maps.arcgis.com/sharing/rest/content/items/63b21d4621df4c6eb4ffc05ecad72bd6/data";
 
-    function fetchAndDisplay() {
-      const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(currentWhere)}&outFields=field_1,field_2,${encodeURIComponent(ageField)}&f=json`;
+const ageField = "field_4";
+let currentWhere = "1=1";
 
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          const features = data.features || [];
-          displayTanzaku(features);
-        });
-    }
+function fetchAndDisplay() {
+  const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(currentWhere)}&outFields=field_1,field_2,${ageField}&orderByFields=objectid desc&resultRecordCount=16&f=json`;
 
-    function displayTanzaku(features) {
-      container.innerHTML = "";
-
-      const margin = 20;
-      const spacingX = 150;
-      const baseY = 100;
-      const heightVariance = 50;
-
-      features.forEach((feature, index) => {
-        const attr = feature.attributes;
-        const ペンネーム = attr["field_1"] || "";
-        const 願い事 = attr["field_2"] || "";
-        const 無題の質問4 = attr["field_4"] || "";
-
-        const x = margin + (index * spacingX);
-        const y = baseY + (index % 2 === 0 ? 0 : heightVariance);
-
-        const div = document.createElement("div");
-        div.className = "tanzaku";
-        const delay = Math.random() * 3;
-        div.style.animationDelay = `${delay}s`;
-        div.style.left = `${x}px`;
-        div.style.top = `${y}px`;
-
-        div.innerHTML = `
-          <img src="${imgURL}" alt="短冊">
-          <div class="text">
-              ${願い事}<br><br>★${ペンネーム}
-          </div>
-        `;
-
-        div.onclick = () => {
-          popupContent.innerHTML = `
-            <p><strong>願い事</strong>：${願い事}</p>
-            <p><strong>ペンネーム</strong>：${ペンネーム}</p>
-            <p><strong>無題の質問４</strong>：${無題の質問4}</p>
-          `;
-          popup.style.display = "flex";
-        };
-
-        container.appendChild(div);
-      });
-    }
-
-    function filterByAge(ageGroup) {
-      currentWhere = ageGroup ? `"field_4"='${ageGroup}'` : "1=1";
-      fetchAndDisplay();
-    }
-
-    fetchAndDisplay();
-    setInterval(fetchAndDisplay, 30000);
-
-    // ポップアップ外側クリックで閉じる
-    popup.addEventListener("click", function (event) {
-      if (event.target.id === "popup") {
-        popup.style.display = "none";
-      }
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const features = data.features || [];
+      displayTanzaku(features);
     });
+}
 
-    // 中身をクリックしても閉じないように
-    popupContent.addEventListener("click", function (event) {
-      event.stopPropagation();
-    });
-  </script>
+function displayTanzaku(features) {
+  container.innerHTML = "";
+  const spacingX = 150;
+  const startY = 100;
+  const secondRowY = 350;
 
+  features.forEach((feature, index) => {
+    const attr = feature.attributes;
+    const penname = attr["field_1"] || "";
+    const wish = attr["field_2"] || "";
+    const div = document.createElement("div");
+    div.className = "tanzaku";
+
+    const x = 50 + (index % 9) * spacingX;
+    const y = index < 9 ? startY : secondRowY;
+
+    div.style.left = `${x}px`;
+    div.style.top = `${y}px`;
+
+    div.innerHTML = `<img src="${imgURL}" alt="短冊">
+                     <div class="text">${wish}<br><br>★${penname}</div>`;
+
+    div.onclick = () => {
+      popupContent.innerHTML = `<p><strong>願い事</strong>：${wish}</p>
+                                <p><strong>ペンネーム</strong>：${penname}</p>`;
+      popup.style.display = "flex";
+    };
+
+    container.appendChild(div);
+  });
+}
+
+function filterByAge(ageGroup) {
+  currentWhere = ageGroup ? `field_4='${ageGroup}'` : "1=1";
+  fetchAndDisplay();
+}
+
+fetchAndDisplay();
+</script>
 </body>
 </html>
+
