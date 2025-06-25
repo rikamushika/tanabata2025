@@ -1,5 +1,4 @@
 /index.html
-<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -137,11 +136,18 @@ const popup = document.getElementById("popup");
 const popupContent = document.getElementById("popup-content");
 const imgURL = "https://iccarcgis.maps.arcgis.com/sharing/rest/content/items/63b21d4621df4c6eb4ffc05ecad72bd6/data";
 
+const confirmField = "確認"; // ArcGISのフィールド名：未 or 済
 const ageField = "field_4";
-let currentWhere = "1=1";
+let currentAgeWhere = ""; // 年代フィルタ
+let currentWhere = `${confirmField}='済'`; // 初期状態では「済」だけを表示
+
+function buildWhereClause() {
+  return `${confirmField}='済'` + (currentAgeWhere ? ` AND ${ageField}='${currentAgeWhere}'` : "");
+}
 
 function fetchAndDisplay() {
-  const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(currentWhere)}&outFields=field_1,field_2,${ageField}&orderByFields=objectid desc&resultRecordCount=16&f=json`;
+  const whereClause = buildWhereClause();
+  const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(whereClause)}&outFields=field_1,field_2,${ageField},${confirmField}&orderByFields=objectid desc&resultRecordCount=16&f=json`;
 
   fetch(url)
     .then(res => res.json())
@@ -150,6 +156,12 @@ function fetchAndDisplay() {
       displayTanzaku(features);
     });
 }
+
+function filterByAge(ageGroup) {
+  currentAgeWhere = ageGroup || "";
+  fetchAndDisplay();
+}
+
 
 function displayTanzaku(features) {
   container.innerHTML = "";
@@ -192,5 +204,4 @@ fetchAndDisplay();
 </script>
 </body>
 </html>
-
 
