@@ -176,8 +176,10 @@ function displayTanzaku(features) {
     const x = 50 + (index % 8) * spacingX;
     const y = index < 8 ? startY : secondRowY;
 
-    div.style.left = `${x}px`;
-    div.style.top = `${y}px`;
+   div.style.left = `${x}px`;
+   div.style.top = `${y}px`;
+   div.style.animationDelay = `${Math.random() * 3}s`; // ← この行を追加（最大3秒のランダムディレイ）
+
 
     div.innerHTML = `<img src="${imgURL}" alt="短冊">
                      <div class="text">${wish}<br><br>★${penname}</div>`;
