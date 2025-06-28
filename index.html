@@ -188,11 +188,36 @@ function displayTanzaku(features) {
     div.innerHTML = `<img src="${imgURL}" alt="短冊">
                      <div class="text">${wish}<br><br>★${penname}</div>`;
 
-    div.onclick = () => {
-      popupContent.innerHTML = `<p><strong>願い事</strong>：${wish}</p>
-                                <p><strong>ペンネーム</strong>：${penname}</p>`;
-      popup.style.display = "flex";
-    };
+div.onclick = () => {
+  popupContent.innerHTML = `
+    <div style="position: relative; width: 400px; margin: 0 auto;">
+      <img src="${imgURL}" alt="短冊" style="width: 100%;">
+      <div style="
+        position: absolute;
+        top: 17%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        height: 68%;
+        max-height: 90%;
+        padding: 5px;
+        color: black;
+        font-size: 25px;
+        font-weight: bold;
+        background-color: transparent;  /*背景を透明に見せる*/
+        writing-mode: vertical-rl;
+        text-align: center;
+        overflow: hidden;
+        word-break: break-word;
+        line-height: 1.5;
+   
+      ">
+        ${wish}<br><br>★${penname}
+      </div>
+    </div>`;
+  popup.style.display = "flex";
+};
+
 
     container.appendChild(div);
   });
