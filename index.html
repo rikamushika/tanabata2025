@@ -14,15 +14,15 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      overflow-x: hidden; /* 横スクロール防止 */
+      overflow-x: hidden;
     }
 
     #tanzaku-container {
       position: relative;
       width: 100%;
-      min-height: 100vh; /* 最低限の高さは1画面 */
-      overflow-y: auto;  /* 縦スクロール可能にする */
-      padding-bottom: 150px; /* ボタンの分だけ余白をつける */
+      min-height: 100vh;
+      overflow-y: auto;
+      padding-bottom: 150px;
     }
 
     @keyframes sway {
@@ -118,117 +118,135 @@
     #age-buttons button:hover {
       background-color: #d0eaff;
     }
+
+    #count-display {
+      position: fixed;
+      top: 120px;
+      left: 70%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.8);
+      padding: 8px 15px;
+      border-radius: 10px;
+      font-size: 25px;
+      font-weight: bold;
+      z-index: 998;
+    }
   </style>
 </head>
 <body>
-<div id="age-buttons">
-  <button onclick="filterByAge('10代以下')">10代以下</button>
-  <button onclick="filterByAge('20代')">20代</button>
-  <button onclick="filterByAge('30代')">30代</button>
-  <button onclick="filterByAge('40代')">40代</button>
-  <button onclick="filterByAge('50代')">50代</button>
-  <button onclick="filterByAge('60代')">60代</button>
-  <button onclick="filterByAge('70代')">70代</button>
-  <button onclick="filterByAge('80代以上')">80代以上</button>
-  <button onclick="filterByAge()">全て表示</button>
-</div>
+  <div id="age-buttons">
+    <button onclick="filterByAge('10代以下')">10代以下</button>
+    <button onclick="filterByAge('20代')">20代</button>
+    <button onclick="filterByAge('30代')">30代</button>
+    <button onclick="filterByAge('40代')">40代</button>
+    <button onclick="filterByAge('50代')">50代</button>
+    <button onclick="filterByAge('60代')">60代</button>
+    <button onclick="filterByAge('70代')">70代</button>
+    <button onclick="filterByAge('80代以上')">80代以上</button>
+    <button onclick="filterByAge()">全て表示</button>
+  </div>
 
-<div id="tanzaku-container"></div>
+  <div id="count-display">願いの数：0 枚</div>
 
-<div id="popup" onclick="popup.style.display = 'none';">
-  <div id="popup-content" onclick="event.stopPropagation();"></div>
-</div>
+  <div id="tanzaku-container"></div>
 
-<script>
-const container = document.getElementById("tanzaku-container");
-const popup = document.getElementById("popup");
-const popupContent = document.getElementById("popup-content");
-const imgURL = "https://iccarcgis.maps.arcgis.com/sharing/rest/content/items/63b21d4621df4c6eb4ffc05ecad72bd6/data";
+  <div id="popup" onclick="popup.style.display = 'none';">
+    <div id="popup-content" onclick="event.stopPropagation();"></div>
+  </div>
 
-const confirmField = "確認";
-const ageField = "field_4";
-let currentAgeWhere = "";
+  <script>
+    const container = document.getElementById("tanzaku-container");
+    const popup = document.getElementById("popup");
+    const popupContent = document.getElementById("popup-content");
+    const countDisplay = document.getElementById("count-display");
+    const imgURL = "https://iccarcgis.maps.arcgis.com/sharing/rest/content/items/63b21d4621df4c6eb4ffc05ecad72bd6/data";
 
-function buildWhereClause() {
-  return `${confirmField}='済'` + (currentAgeWhere ? ` AND ${ageField}='${currentAgeWhere}'` : "");
-}
+    const confirmField = "確認";
+    const ageField = "field_4";
+    let currentAgeWhere = "";
 
-function fetchAndDisplay() {
-  const whereClause = buildWhereClause();
-  const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(whereClause)}&outFields=field_1,field_2,${ageField},${confirmField}&orderByFields=objectid desc&f=json`;
+    function buildWhereClause() {
+      return `${confirmField}='済'` + (currentAgeWhere ? ` AND ${ageField}='${currentAgeWhere}'` : "");
+    }
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const features = data.features || [];
-      displayTanzaku(features);
-    });
-}
+    function fetchAndDisplay() {
+      const whereClause = buildWhereClause();
+      const url = `https://services5.arcgis.com/oISMFKlA90RsGqBJ/arcgis/rest/services/survey123_428ee531d6f64629ad1fb10db7e23778_results/FeatureServer/0/query?where=${encodeURIComponent(whereClause)}&outFields=field_1,field_2,${ageField},${confirmField}&orderByFields=objectid desc&f=json`;
 
-function filterByAge(ageGroup) {
-  currentAgeWhere = ageGroup || "";
-  fetchAndDisplay();
-}
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const features = data.features || [];
+          displayTanzaku(features);
+        });
+    }
 
-function displayTanzaku(features) {
-  container.innerHTML = "";
-  const spacingX = 150;
-  const spacingY = 300;
-  const columns = 10;
+    function filterByAge(ageGroup) {
+      currentAgeWhere = ageGroup || "";
+      fetchAndDisplay();
+    }
 
-  features.forEach((feature, index) => {
-    const attr = feature.attributes;
-    const penname = attr["field_1"] || "";
-    const wish = attr["field_2"] || "";
-    const div = document.createElement("div");
-    div.className = "tanzaku";
+    function displayTanzaku(features) {
+      container.innerHTML = "";
+      countDisplay.textContent = `願いの数：${features.length} 枚`;
 
-    const col = index % columns;
-    const row = Math.floor(index / columns);
-    const x = 30 + col * spacingX;
-    const y = 170 + row * spacingY;   /*短冊開始位置を下にさげる*/
+      const spacingX = 150;
+      const spacingY = 300;
+      const columns = 10;
 
-    div.style.left = `${x}px`;
-    div.style.top = `${y}px`;
-    div.style.animationDelay = `${Math.random() * 3}s`;
+      features.forEach((feature, index) => {
+        const attr = feature.attributes;
+        const penname = attr["field_1"] || "";
+        const wish = attr["field_2"] || "";
+        const div = document.createElement("div");
+        div.className = "tanzaku";
 
-    div.innerHTML = `<img src="${imgURL}" alt="短冊">
-                     <div class="text">${wish}<br>★${penname}</div>`;
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = 30 + col * spacingX;
+        const y = 170 + row * spacingY;
 
-    div.onclick = () => {
-      popupContent.innerHTML = `
-        <div style="position: relative; width: 400px; margin: 0 auto;">
-          <img src="${imgURL}" alt="短冊" style="width: 100%;">
-          <div style="
-            position: absolute;
-            top: 17%;
-            left: 40%;
-            transform: translate(-50%, 0%);
-            width: 50%;
-            max-height: 70%;
-            padding: 5px;
-            color: black;
-            font-size: 24px;
-            font-weight: bold;
-            background-color: transparent;
-            writing-mode: vertical-rl;
-            text-align: center;
-            overflow: hidden;
-            word-break: break-word;
-            line-height: 1.1;
-            box-sizing: border-box;
-          ">
-            ${wish}<br><br>★${penname}
-          </div>
-        </div>`;
-      popup.style.display = "flex";
-    };
+        div.style.left = `${x}px`;
+        div.style.top = `${y}px`;
+        div.style.animationDelay = `${Math.random() * 3}s`;
 
-    container.appendChild(div);
-  });
-}
+        div.innerHTML = `<img src="${imgURL}" alt="短冊">
+                         <div class="text">${wish}<br>★${penname}</div>`;
 
-fetchAndDisplay();
-</script>
+        div.onclick = () => {
+          popupContent.innerHTML = `
+            <div style="position: relative; width: 400px; margin: 0 auto;">
+              <img src="${imgURL}" alt="短冊" style="width: 100%;">
+              <div style="
+                position: absolute;
+                top: 17%;
+                left: 40%;
+                transform: translate(-50%, 0%);
+                width: 50%;
+                max-height: 70%;
+                padding: 5px;
+                color: black;
+                font-size: 24px;
+                font-weight: bold;
+                background-color: transparent;
+                writing-mode: vertical-rl;
+                text-align: center;
+                overflow: hidden;
+                word-break: break-word;
+                line-height: 1.1;
+                box-sizing: border-box;
+              ">
+                ${wish}<br><br>★${penname}
+              </div>
+            </div>`;
+          popup.style.display = "flex";
+        };
+
+        container.appendChild(div);
+      });
+    }
+
+    fetchAndDisplay();
+  </script>
 </body>
 </html>
