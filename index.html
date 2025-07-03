@@ -131,10 +131,32 @@
       font-weight: bold;
       z-index: 998;
     }
+
+    /* ★ 流れ星スタイル */
+    .shooting-star {
+      position: fixed;
+      font-size: 40px;
+      color: gold;
+      z-index: 2000;
+      animation: starFall 3s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes starFall {
+      0% {
+        top: -100px;
+        opacity: 1;
+      }
+      100% {
+        top: 100%;
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="age-buttons">
+       
     <button onclick="filterByAge('10代以下')">10代以下</button>
     <button onclick="filterByAge('20代')">20代</button>
     <button onclick="filterByAge('30代')">30代</button>
@@ -147,7 +169,6 @@
   </div>
 
   <div id="count-display">願いの数：0 枚</div>
-
   <div id="tanzaku-container"></div>
 
   <div id="popup" onclick="popup.style.display = 'none';">
@@ -186,6 +207,18 @@
       fetchAndDisplay();
     }
 
+    function createShootingStar() {
+      const star = document.createElement("div");
+      star.classList.add("shooting-star");
+      star.textContent = "★";
+      const left = Math.random() * 80 + 10; // 10vw〜90vw
+      star.style.left = `${left}vw`;
+      document.body.appendChild(star);
+      setTimeout(() => {
+        star.remove();
+      }, 3000);
+    }
+
     function displayTanzaku(features) {
       container.innerHTML = "";
       countDisplay.textContent = `願いの数：${features.length} 枚`;
@@ -214,6 +247,11 @@
                          <div class="text">${wish}<br>★${penname}</div>`;
 
         div.onclick = () => {
+          // ★ 3つ流れ星を落とす
+          for (let i = 0; i < 5; i++) {
+            setTimeout(createShootingStar, i * 400);
+          }
+
           popupContent.innerHTML = `
             <div style="position: relative; width: 400px; margin: 0 auto;">
               <img src="${imgURL}" alt="短冊" style="width: 100%;">
@@ -250,3 +288,4 @@
   </script>
 </body>
 </html>
+
